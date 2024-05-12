@@ -5,18 +5,16 @@ public class ODUSolving {
     int n;
     double[] x;
     double[] y;
-    double eps;
     double h;
     Method method;
 
     public ODUSolving() {}
 
-    public ODUSolving(double a, double b, double y0, int n, double eps, Method method) {
+    public ODUSolving(double a, double b, double y0, int n, Method method) {
         this.a = a;
         this.b = b;
         this.y0 = y0;
         this.n = n;
-        this.eps = eps;
         this.method = method;
         this.h = (b - a) / n;
 
@@ -38,7 +36,6 @@ public class ODUSolving {
                 break;
             }
         }
-
     }
 
     private void Euler() {

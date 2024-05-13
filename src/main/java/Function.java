@@ -1,7 +1,7 @@
 public class Function {
     public static double func(double x, double y) {
-        return x / 5 - y; //Task1
-        //return Math.cos(y) / (1.5 + x) + 0.1 * y * y; //Task2
+        //return x / 5 - y; //Task1 y0(0.2) = 1.1
+        return Math.cos(y) / (1.5 + x) + 0.1 * y * y; //Task2 y0(0) = 0
     }
 
     public static double funcExact(double x) {

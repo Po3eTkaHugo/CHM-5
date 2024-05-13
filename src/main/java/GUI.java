@@ -111,7 +111,7 @@ public class GUI extends JFrame {
         XYSeries function = new XYSeries("f(x)");
         XYSeries counted = new XYSeries("c(x)");
 
-        int nIter = n;
+        int nIter = n - 1;
         double[] coordX = new double[0];
         double[] coordY = new double[0];
         double delta = 1.0;
@@ -131,6 +131,28 @@ public class GUI extends JFrame {
                     coordX[i] = oduSolving.x[i];
                     coordY[i] = oduSolving.y[i];
                     function.add(oduSolving.x[i], Function.funcExact(oduSolving.x[i]));
+                    counted.add(oduSolving.x[i], oduSolving.y[i]);
+                }
+                break;
+            }
+            case 2: {
+                ODUSolving oduSolvingFirst = new ODUSolving(a, b, y0, n, method);
+                for (int i = 0; i <= oduSolvingFirst.n; i++) {
+                    function.add(oduSolvingFirst.x[i], oduSolvingFirst.y[i]);
+                }
+                do {
+                    nIter++;
+                    ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
+                    ODUSolving oduSolving2n = new ODUSolving(a, b, y0, 2 * nIter, method);
+                    delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
+                } while (delta > eps);
+
+                coordX = new double[nIter + 1];
+                coordY = new double[nIter + 1];
+                ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
+                for (int i = 0; i <= oduSolving.n; i++) {
+                    coordX[i] = oduSolving.x[i];
+                    coordY[i] = oduSolving.y[i];
                     counted.add(oduSolving.x[i], oduSolving.y[i]);
                 }
                 break;

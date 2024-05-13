@@ -168,11 +168,15 @@ public class GUI extends JFrame {
         xAxis.setRange(coordX[0] - 0.5, coordX[nIter] + 0.5);
         yAxis.setRange(Arrays.stream(coordY).min().getAsDouble() - 0.5, Arrays.stream(coordY).max().getAsDouble() + 0.5);
 
+        XYSeriesCollection bothFunc = new XYSeriesCollection();
+        bothFunc.addSeries(function);
+        bothFunc.addSeries(counted);
+
         JFreeChart chartFunction = ChartFactory.createXYLineChart("f(x)", "X", "Y",
                 new XYSeriesCollection(function), PlotOrientation.VERTICAL, true, true, false);
 
         JFreeChart chartCounted = ChartFactory.createXYLineChart("c(x)", "X", "Y",
-                new XYSeriesCollection(counted), PlotOrientation.VERTICAL, true, true, false);
+                bothFunc, PlotOrientation.VERTICAL, true, true, false);
 
         XYLineAndShapeRenderer renderer1 = new XYLineAndShapeRenderer();
         renderer1.setSeriesLinesVisible(0, true);

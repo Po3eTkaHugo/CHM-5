@@ -1,5 +1,10 @@
+import java.util.Arrays;
+
 public class Runner {
     public static void main(String[] args) {
+        GUI gui = new GUI();
+        gui.setVisible(true);
+
         //Task1 ans Task2
         System.out.println("Task1 and Task2");
         System.out.printf("%-9s \t %-15s \t %-15s \n", "eps", "Euler", "Runge-Kutt");

@@ -23,6 +23,8 @@ public class GUI extends JFrame {
     private static final JTextField inputN = new JTextField("10", 0);
     private static final JLabel labelY0 = new JLabel("Значение, определяющее начальное условие задачи(y0): ");
     private static final JTextField inputY0 = new JTextField("1.1", 0);
+    private static final JLabel labelEps = new JLabel("Точность(eps): ");
+    private static final JTextField inputEps = new JTextField("0.01", 0);
 
     private static final JLabel labelMethod = new JLabel("Метод решения ОДУ: ");
     private static final ButtonGroup buttonGroup1 = new ButtonGroup();
@@ -57,6 +59,8 @@ public class GUI extends JFrame {
         container.add(inputN);
         container.add(labelY0);
         container.add(inputY0);
+        container.add(labelEps);
+        container.add(inputEps);
 
         container.add(labelMethod);
         container.add(filler1);
@@ -73,7 +77,8 @@ public class GUI extends JFrame {
                         Double.parseDouble(inputB.getText()),
                         Double.parseDouble(inputY0.getText()),
                         Integer.parseInt(inputN.getText()),
-                        inputMethod1.isSelected() ? Method.Euler : Method.RungeKutt);
+                        inputMethod1.isSelected() ? Method.Euler : Method.RungeKutt,
+                        Double.parseDouble(inputEps.getText()));
                 displayGraphs(graphs);
             }
         );
@@ -97,11 +102,20 @@ public class GUI extends JFrame {
         graphFrame.setVisible(true);
     }
 
-    private JFreeChart[] createGraphs(double a, double b, double y0, int n, Method method) {
+    private JFreeChart[] createGraphs(double a, double b, double y0, int n, Method method, double eps) {
         XYSeries function = new XYSeries("f(x)");
         XYSeries counted = new XYSeries("c(x)");
 
-        ODUSolving oduSolving = new ODUSolving(a, b, y0, n, method);
+        int nIter = n;
+        double delta = 1.0;
+        do {
+            nIter++;
+            ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
+            ODUSolving oduSolving2n = new ODUSolving(a, b, y0, 2 * nIter, method);
+            delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
+        } while (delta > eps);
+
+        ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
         for (int i = 0; i <= oduSolving.n; i++) {
             function.add(oduSolving.x[i], Function.funcExact(oduSolving.x[i]));
             counted.add(oduSolving.x[i], oduSolving.y[i]);
@@ -113,8 +127,8 @@ public class GUI extends JFrame {
         xAxis.setAutoRange(false);
         yAxis.setAutoRange(false);
 
-        xAxis.setRange(oduSolving.x[0] - 1, oduSolving.x[oduSolving.n] + 1);
-        yAxis.setRange(Arrays.stream(oduSolving.y).min().getAsDouble() - 1, Arrays.stream(oduSolving.y).max().getAsDouble() + 1);
+        xAxis.setRange(oduSolving.x[0] - 0.5, oduSolving.x[oduSolving.n] + 0.5);
+        yAxis.setRange(Arrays.stream(oduSolving.y).min().getAsDouble() - 0.5, Arrays.stream(oduSolving.y).max().getAsDouble() + 0.5);
 
         JFreeChart chartFunction = ChartFactory.createXYLineChart("f(x)", "X", "Y",
                 new XYSeriesCollection(function), PlotOrientation.VERTICAL, true, true, false);
@@ -141,12 +155,6 @@ public class GUI extends JFrame {
         chartCounted.getXYPlot().setDomainAxis(xAxis);
         chartCounted.getXYPlot().setRangeAxis(yAxis);
         chartCounted.getXYPlot().setRenderer(renderer2);
-
-        NumberAxis eXAxis = new NumberAxis("X");
-        NumberAxis eYAxis = new NumberAxis("Y");
-        eXAxis.setAutoRange(false);
-        eXAxis.setRange(oduSolving.x[0] - 1, oduSolving.x[oduSolving.n] + 1);
-        eYAxis.setAutoRange(true);
 
         return new JFreeChart[]{
                 chartFunction,

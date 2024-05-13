@@ -25,6 +25,8 @@ public class GUI extends JFrame {
     private static final JTextField inputY0 = new JTextField("1.1", 0);
     private static final JLabel labelEps = new JLabel("Точность(eps): ");
     private static final JTextField inputEps = new JTextField("0.01", 0);
+    private static final JLabel labelTask = new JLabel("Номер задачи(task): ");
+    private static final JTextField inputTask = new JTextField("1", 0);
 
     private static final JLabel labelMethod = new JLabel("Метод решения ОДУ: ");
     private static final ButtonGroup buttonGroup1 = new ButtonGroup();
@@ -39,8 +41,8 @@ public class GUI extends JFrame {
 
     public GUI() {
 
-        super("Interpolation");
-        this.setSize(500, 250);
+        super("ODU Solving");
+        this.setSize(750, 250);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
@@ -50,7 +52,7 @@ public class GUI extends JFrame {
         inputMethod1.doClick();
 
         Container container = this.getContentPane();
-        container.setLayout(new GridLayout(8, 2, 2, 2));
+        container.setLayout(new GridLayout(9, 2, 2, 2));
         container.add(labelA);
         container.add(inputA);
         container.add(labelB);
@@ -67,6 +69,8 @@ public class GUI extends JFrame {
         //container.add(filler2);
         container.add(inputMethod1);
         container.add(inputMethod2);
+        container.add(labelTask);
+        container.add(inputTask);
 
         container.add(button);
         button.addActionListener(e -> {
@@ -78,7 +82,8 @@ public class GUI extends JFrame {
                         Double.parseDouble(inputY0.getText()),
                         Integer.parseInt(inputN.getText()),
                         inputMethod1.isSelected() ? Method.Euler : Method.RungeKutt,
-                        Double.parseDouble(inputEps.getText()));
+                        Double.parseDouble(inputEps.getText()),
+                        Integer.parseInt(inputTask.getText()));
                 displayGraphs(graphs);
             }
         );
@@ -102,23 +107,34 @@ public class GUI extends JFrame {
         graphFrame.setVisible(true);
     }
 
-    private JFreeChart[] createGraphs(double a, double b, double y0, int n, Method method, double eps) {
+    private JFreeChart[] createGraphs(double a, double b, double y0, int n, Method method, double eps, int task) {
         XYSeries function = new XYSeries("f(x)");
         XYSeries counted = new XYSeries("c(x)");
 
         int nIter = n;
+        double[] coordX = new double[0];
+        double[] coordY = new double[0];
         double delta = 1.0;
-        do {
-            nIter++;
-            ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
-            ODUSolving oduSolving2n = new ODUSolving(a, b, y0, 2 * nIter, method);
-            delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
-        } while (delta > eps);
+        switch (task){
+            case 1: {
+                do {
+                    nIter++;
+                    ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
+                    ODUSolving oduSolving2n = new ODUSolving(a, b, y0, 2 * nIter, method);
+                    delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
+                } while (delta > eps);
 
-        ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
-        for (int i = 0; i <= oduSolving.n; i++) {
-            function.add(oduSolving.x[i], Function.funcExact(oduSolving.x[i]));
-            counted.add(oduSolving.x[i], oduSolving.y[i]);
+                coordX = new double[nIter + 1];
+                coordY = new double[nIter + 1];
+                ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
+                for (int i = 0; i <= oduSolving.n; i++) {
+                    coordX[i] = oduSolving.x[i];
+                    coordY[i] = oduSolving.y[i];
+                    function.add(oduSolving.x[i], Function.funcExact(oduSolving.x[i]));
+                    counted.add(oduSolving.x[i], oduSolving.y[i]);
+                }
+                break;
+            }
         }
 
         NumberAxis xAxis = new NumberAxis("X");
@@ -127,8 +143,8 @@ public class GUI extends JFrame {
         xAxis.setAutoRange(false);
         yAxis.setAutoRange(false);
 
-        xAxis.setRange(oduSolving.x[0] - 0.5, oduSolving.x[oduSolving.n] + 0.5);
-        yAxis.setRange(Arrays.stream(oduSolving.y).min().getAsDouble() - 0.5, Arrays.stream(oduSolving.y).max().getAsDouble() + 0.5);
+        xAxis.setRange(coordX[0] - 0.5, coordX[nIter] + 0.5);
+        yAxis.setRange(Arrays.stream(coordY).min().getAsDouble() - 0.5, Arrays.stream(coordY).max().getAsDouble() + 0.5);
 
         JFreeChart chartFunction = ChartFactory.createXYLineChart("f(x)", "X", "Y",
                 new XYSeriesCollection(function), PlotOrientation.VERTICAL, true, true, false);

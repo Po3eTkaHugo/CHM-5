@@ -110,10 +110,12 @@ public class GUI extends JFrame {
     private JFreeChart[] createGraphs(double a, double b, double y0, int n, Method method, double eps, int task) {
         XYSeries function = new XYSeries("f(x)");
         XYSeries counted = new XYSeries("c(x)");
+        XYSeries u1First = new XYSeries("u1First(x)");
+        XYSeries u2First = new XYSeries("u2First(x)");
+        XYSeries u1 = new XYSeries("u1(x)");
+        XYSeries u2 = new XYSeries("u2(x)");
 
         int nIter = n - 1;
-        double[] coordX = new double[0];
-        double[] coordY = new double[0];
         double delta = 1.0;
         switch (task){
             case 1: {
@@ -124,12 +126,8 @@ public class GUI extends JFrame {
                     delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
                 } while (delta > eps);
 
-                coordX = new double[nIter + 1];
-                coordY = new double[nIter + 1];
                 ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
                 for (int i = 0; i <= oduSolving.n; i++) {
-                    coordX[i] = oduSolving.x[i];
-                    coordY[i] = oduSolving.y[i];
                     function.add(oduSolving.x[i], Function.funcExact(oduSolving.x[i]));
                     counted.add(oduSolving.x[i], oduSolving.y[i]);
                 }
@@ -147,13 +145,31 @@ public class GUI extends JFrame {
                     delta = Math.abs(oduSolving.y[oduSolving.n] - oduSolving2n.y[oduSolving2n.n]) / (Math.pow(2, 4) - 1);
                 } while (delta > eps);
 
-                coordX = new double[nIter + 1];
-                coordY = new double[nIter + 1];
                 ODUSolving oduSolving = new ODUSolving(a, b, y0, nIter, method);
                 for (int i = 0; i <= oduSolving.n; i++) {
-                    coordX[i] = oduSolving.x[i];
-                    coordY[i] = oduSolving.y[i];
                     counted.add(oduSolving.x[i], oduSolving.y[i]);
+                }
+                break;
+            }
+            case 3: {
+                ODUSystemSolving oduSystemSolvingFirst = new ODUSystemSolving(0, 2, 119.0/900.0, 211.0/900.0, n, method);
+                for (int i = 0; i <= oduSystemSolvingFirst.n; i++) {
+                    u1First.add(oduSystemSolvingFirst.x[i], oduSystemSolvingFirst.u1[i]);
+                    u2First.add(oduSystemSolvingFirst.x[i], oduSystemSolvingFirst.u2[i]);
+                }
+
+                do {
+                    nIter++;
+                    ODUSystemSolving oduSystemSolving = new ODUSystemSolving(0, 2, 119.0/900.0, 211.0/900.0, nIter, method);
+                    ODUSystemSolving oduSystemSolving2n = new ODUSystemSolving(0, 2, 119.0/900.0, 211.0/900.0, 2 * nIter, method);
+                    delta = Math.max(Math.abs(oduSystemSolving.u1[oduSystemSolving.n] - oduSystemSolving2n.u1[oduSystemSolving2n.n]) / (Math.pow(2, 3) - 1),
+                            Math.abs(oduSystemSolving.u2[oduSystemSolving.n] - oduSystemSolving2n.u2[oduSystemSolving2n.n]) / (Math.pow(2, 3) - 1));
+                } while (delta > eps);
+
+                ODUSystemSolving oduSystemSolving = new ODUSystemSolving(0, 2, 119.0/900.0, 211.0/900.0, nIter, method);
+                for (int i = 0; i <= oduSystemSolving.n; i++) {
+                    u1.add(oduSystemSolving.x[i], oduSystemSolving.u1[i]);
+                    u2.add(oduSystemSolving.x[i], oduSystemSolving.u2[i]);
                 }
                 break;
             }
@@ -162,21 +178,26 @@ public class GUI extends JFrame {
         NumberAxis xAxis = new NumberAxis("X");
         NumberAxis yAxis = new NumberAxis("Y");
 
-        xAxis.setAutoRange(false);
-        yAxis.setAutoRange(false);
+        xAxis.setAutoRange(true);
+        yAxis.setAutoRange(true);
 
-        xAxis.setRange(coordX[0] - 0.5, coordX[nIter] + 0.5);
-        yAxis.setRange(Arrays.stream(coordY).min().getAsDouble() - 0.5, Arrays.stream(coordY).max().getAsDouble() + 0.5);
+        XYSeriesCollection bothUFirst = new XYSeriesCollection();
+        bothUFirst.addSeries(u1First);
+        bothUFirst.addSeries(u2First);
+
+        XYSeriesCollection bothU = new XYSeriesCollection();
+        bothU.addSeries(u1);
+        bothU.addSeries(u2);
 
         XYSeriesCollection bothFunc = new XYSeriesCollection();
         bothFunc.addSeries(function);
         bothFunc.addSeries(counted);
 
         JFreeChart chartFunction = ChartFactory.createXYLineChart("f(x)", "X", "Y",
-                new XYSeriesCollection(function), PlotOrientation.VERTICAL, true, true, false);
+                task == 3 ? bothUFirst : new XYSeriesCollection(function), PlotOrientation.VERTICAL, true, true, false);
 
         JFreeChart chartCounted = ChartFactory.createXYLineChart("c(x)", "X", "Y",
-                bothFunc, PlotOrientation.VERTICAL, true, true, false);
+                task == 3 ? bothU : bothFunc, PlotOrientation.VERTICAL, true, true, false);
 
         XYLineAndShapeRenderer renderer1 = new XYLineAndShapeRenderer();
         renderer1.setSeriesLinesVisible(0, true);
